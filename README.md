@@ -126,6 +126,11 @@ flutter test
 flutter analyze
 ```
 
+For iOS simulator runs, make sure the local machine has:
+
+- CocoaPods installed and available on `PATH`.
+- An Xcode iOS Simulator runtime installed that matches the active Xcode SDK.
+
 Runtime configuration is passed through Dart defines when Supabase auth is wired in:
 
 ```sh
@@ -141,21 +146,26 @@ cd infra/supabase
 docker compose --env-file .env.example config
 ```
 
+Current backend caveat:
+
+- The checked-in `infra/supabase` stack is still a template. `db`, `rest`, and `kong` can start locally, but the current plain `postgres:17-alpine` bootstrap is not yet sufficient for a clean Supabase Auth startup on a fresh database. Align it with the official self-hosted Supabase Postgres/bootstrap flow before treating it as a working end-to-end local auth environment.
+
 ## Moving To A New Codex Project
 
 This repo was renamed locally after the original Codex workspace was created, so the active sandbox writable root may still point at the old directory. For future work, create a new Codex project directly at the current repo path:
 
 ```text
-/Users/estbndlt/Documents/page-pulse
+/Users/estbndlt/Documents/git/page-pulse
 ```
 
 Recommended handoff steps:
 
-1. Open a new Codex project with `/Users/estbndlt/Documents/page-pulse` as the workspace root.
+1. Open a new Codex project with `/Users/estbndlt/Documents/git/page-pulse` as the workspace root.
 2. Confirm the branch is `codex/initial-page-pulse-scaffold` or switch to the branch you want to continue from.
 3. Run `flutter pub get`, `flutter test`, and `flutter analyze`.
 4. Keep real backend credentials in untracked `.env` files only.
-5. Continue development from the clean architecture boundaries already present in `lib/features`.
+5. If you need iOS simulator work, confirm CocoaPods and the matching Xcode simulator runtime are installed before running `flutter run`.
+6. Continue development from the clean architecture boundaries already present in `lib/features`.
 
 ## Future Improvements
 
