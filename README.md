@@ -6,7 +6,9 @@ The project is intentionally designed so private book content stays on the devic
 
 ## Current Status
 
-This repo is at the initial scaffold stage.
+This repo is still early, but it now has one real end-to-end reading path on
+iOS: import a local PDF, render it as a reflowable reader view, and wire the
+reader play button into the speech/playback application boundary.
 
 Implemented:
 
@@ -15,20 +17,24 @@ Implemented:
 - Pure Dart domain entities and repository contracts for the main app boundaries.
 - PDF import foundation with tokenization and PDF-to-book model builder services.
 - Speech foundation with practical word cue estimation and playback cursor mapping.
-- Placeholder Flutter screens for login, library, PDF import, reader, and playback controls.
+- Flutter screens for login, library, PDF import, reader, and playback controls.
+- Real PDF picker flow plus an iOS PDFKit text extraction adapter for local PDF import.
+- Reader rendering from imported `Book` data.
+- Reader play-button orchestration through a `SectionPlaybackController` and Riverpod providers.
+- TDD-friendly speech test infrastructure with fakes, provider overrides, controller tests, and reader widget tests.
 - Supabase/Postgres/Auth/PostgREST/Kong/Cloudflare Tunnel backend templates under `infra/supabase`.
 - Initial Supabase RLS migration for profiles, document metadata, reading positions, and user settings.
-- Unit tests for tokenization, speech cue estimation, and playback cursor mapping.
+- Flutter tests for tokenization, speech cue estimation, playback cursor mapping, playback orchestration, and reader playback wiring.
 - Security guidance and `.gitignore` rules for secrets, generated audio, model files, imported PDFs, and local backend volumes.
 
 Not implemented yet:
 
-- Real PDF file picker flow and platform PDF text extraction adapter wiring.
+- Android PDF text extraction parity with the current iOS import path.
 - Local Drift database schema and repositories.
 - Supabase client initialization and Google OAuth UI flow.
 - On-device `sherpa_onnx` TTS adapter, model download/install UX, or generated audio cache.
 - Real audio playback integration with `just_audio`.
-- Reader rendering from imported book data.
+- Seek, progress, current-section selection, and token highlighting during playback.
 - End-to-end import, read-aloud, highlight, and progress sync flows.
 
 ## Design Architecture
@@ -85,6 +91,12 @@ V1 uses practical word sync rather than exact model timestamps:
 
 This keeps the exact timing engine replaceable. A future Kokoro or custom ONNX adapter can emit real timestamps while preserving the same `SpeechAsset` and `SpeechCue` domain types.
 
+Current implementation note:
+
+- The reader now wires the play button into a `SectionPlaybackController`.
+- The default speech and playback repositories are still unavailable placeholders until concrete adapters are added.
+- The current vertical slice proves the UI-to-application orchestration path and keeps real TTS/audio engines behind interfaces.
+
 ### Backend design
 
 The backend is deliberately lightweight for Raspberry Pi hosting:
@@ -139,6 +151,13 @@ flutter run \
   --dart-define=SUPABASE_ANON_KEY=replace-with-anon-key
 ```
 
+For the current iOS PDF import path, a starter PDF can also be injected with:
+
+```sh
+flutter run \
+  --dart-define=STARTER_PDF_PATH=/absolute/path/to/book.pdf
+```
+
 Validate the backend Compose template:
 
 ```sh
@@ -165,15 +184,16 @@ Recommended handoff steps:
 3. Run `flutter pub get`, `flutter test`, and `flutter analyze`.
 4. Keep real backend credentials in untracked `.env` files only.
 5. If you need iOS simulator work, confirm CocoaPods and the matching Xcode simulator runtime are installed before running `flutter run`.
-6. Continue development from the clean architecture boundaries already present in `lib/features`.
+6. If you want the sample reader path immediately, launch with `STARTER_PDF_PATH` pointing at a local PDF.
+7. Continue development from the clean architecture boundaries already present in `lib/features`.
+8. The next TDD-ready speech slice is a concrete `SpeechSynthesisRepository` adapter that generates a local `SpeechAsset` for one section.
 
 ## Future Improvements
 
 Near-term app work:
 
-- Wire PDF picking and text extraction into `ImportPdfDocument`.
+- Add Android support for the current PDF text extraction path.
 - Add Drift tables and local repository implementations for books, sections, tokens, speech assets, and reading progress.
-- Render imported book sections in the reader instead of placeholder text.
 - Integrate `just_audio` playback and connect it to `PlaybackCursorMapper`.
 - Add the first `sherpa_onnx` adapter for on-device TTS and cache generated audio safely.
 - Add Supabase initialization and Google OAuth login/logout.
@@ -182,7 +202,7 @@ Quality and architecture work:
 
 - Add integration tests for import-to-reader and playback-to-highlight flows.
 - Add repository tests with in-memory SQLite.
-- Add fake PDF, speech, playback, auth, and sync adapters for UI tests.
+- Extend the existing fake PDF/speech/playback test harness to cover full reader and playback flows.
 - Add error handling for encrypted PDFs, image-only PDFs, unsupported TTS models, missing storage, and offline backend access.
 - Add CI for formatting, `flutter test`, `flutter analyze`, and backend SQL lint/config validation.
 

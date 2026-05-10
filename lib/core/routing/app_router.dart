@@ -2,13 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/import/presentation/import_providers.dart';
 import '../../features/import/presentation/import_screen.dart';
+import '../../features/library/domain/entities/book.dart';
 import '../../features/library/presentation/library_screen.dart';
 import '../../features/reader/presentation/reader_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final environment = ref.watch(appEnvironmentProvider);
+
   return GoRouter(
-    initialLocation: LibraryScreen.routePath,
+    initialLocation: environment.hasStarterPdf
+        ? ReaderScreen.routePath
+        : LibraryScreen.routePath,
     routes: [
       GoRoute(
         path: LoginScreen.routePath,
@@ -28,7 +34,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: ReaderScreen.routePath,
         name: ReaderScreen.routeName,
-        builder: (context, state) => const ReaderScreen(),
+        builder: (context, state) {
+          final book = state.extra is Book ? state.extra! as Book : null;
+          return ReaderScreen(book: book);
+        },
       ),
     ],
   );
